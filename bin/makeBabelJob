@@ -15,9 +15,18 @@ var path = require('path'),
     localeIds = commandLineOptions.locales && _.flatten(_.flatten([commandLineOptions.locales]).map(function (localeId) {
         return localeId.split(',');
     })).map(i18nTools.normalizeLocaleId),
-    defaultLocaleId = commandLineOptions.defaultlocale ? i18nTools.normalizeLocaleId(commandLineOptions.defaultlocale) : localeIds[0],
     initialAssetUrls = commandLineOptions._.map(urlTools.fsFilePathToFileUrl),
+    defaultLocaleId,
     i18nUrl;
+
+if (commandLineOptions.defaultlocale) {
+    defaultLocaleId = i18nTools.normalizeLocaleId(commandLineOptions.defaultlocale);
+    if (localeIds && localeIds.indexOf(defaultLocaleId) === -1) {
+        throw new Error('The default locale id (' + defaultLocaleId + ') is not among the locales listed with the --locales switch (' + localeIds.join(', ') + ')');
+    }
+} else if (localeIds) {
+    defaultLocaleId = localeIds[0];
+}
 
 if (commandLineOptions.i18n) {
     i18nUrl = urlTools.fsFilePathToFileUrl(commandLineOptions.i18n);
@@ -62,7 +71,7 @@ new AssetGraph({root: commandLineOptions.root})
     .fixBaseAssetsOfUnresolvedOutgoingRelationsFromHtmlFragments({isInitial: true})
     .assumeThatAllHtmlFragmentAssetsWithoutIncomingRelationsAreNotTemplates()
     .populate({
-        followRelations: {type: AssetGraph.query.not('HtmlAnchor'), to: {url: AssetGraph.query.not(/^https?:/)}}
+        followRelations: {type: AssetGraph.query.not(['HtmlAnchor', 'HtmlMetaRefresh']), to: {url: AssetGraph.query.not(/^https?:/)}}
     })
     .checkLanguageKeys({supportedLocaleIds: localeIds, defaultLocaleId: defaultLocaleId, ignore: 'missing'})
     .queue(function exportLanguageKeys(assetGraph) {
@@ -76,8 +85,13 @@ new AssetGraph({root: commandLineOptions.root})
         if (i18nUrl) {
             i18nAssetForAllKeys = assetGraph.findAssets({url: i18nUrl})[0];
             if (!i18nAssetForAllKeys) {
-                console.error('--i18n ' + commandLineOptions.i18n + ': not found');
-                process.exit(1);
+                i18nAssetForAllKeys = new AssetGraph.I18n({
+                    url: i18nUrl,
+                    isDirty: true,
+                    parseTree: {}
+                });
+                assetGraph.addAsset(i18nAssetForAllKeys);
+                assetGraph.emit('info', '--i18n ' + commandLineOptions.i18n + ' not found, creating it');
             }
         }
 

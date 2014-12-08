@@ -2,12 +2,29 @@ AssetGraph-builder
 ==================
 [![NPM version](https://badge.fury.io/js/assetgraph-builder.png)](http://badge.fury.io/js/assetgraph-builder)
 [![Build Status](https://travis-ci.org/assetgraph/assetgraph-builder.png?branch=master)](https://travis-ci.org/assetgraph/assetgraph-builder)
+[![Coverage Status](https://coveralls.io/repos/assetgraph/assetgraph-builder/badge.png)](https://coveralls.io/r/assetgraph/assetgraph-builder)
 [![Dependency Status](https://david-dm.org/assetgraph/assetgraph-builder.png)](https://david-dm.org/assetgraph/assetgraph-builder)
 
 AssetGraph-based build system (mostly) for single-page web
 applications.
 
 Looking for a Grunt integration? Try [grunt-reduce](https://github.com/Munter/grunt-reduce)
+
+Quick start
+-----------
+
+# Conventional
+```
+npm install -g assetgraph-builder
+buildProduction path/to/your/index.html --outroot path/to/output/directory
+```
+
+# [Docker](https://www.docker.com/)
+```
+docker run --rm -it  -v "$(pwd)":/app/ -w /app/ assetgraph-builder path/to/your/index.html --outroot path/to/output/directory
+```
+
+Congratulations, you just optimized your web page!
 
 Features
 --------
@@ -45,6 +62,7 @@ Features
    specified.
  * Compiles <a href="http://lesscss.org/">less</a> to CSS and strips
    out the in-browser less compiler.
+ * Compiles Sass to CSS
  * Renames JavaScript, CSS, images etc. to a 10-char MD5 prefix + the
    original extension so they can be served with a far-future expiry time.
  * Supports a special syntax for getting the url of static assets from
@@ -69,11 +87,12 @@ Optional first step: To take full advantage of the image processing
 and optimization features, you need several libraries and command line
 utilities installed. On Ubuntu you can grab them all by running:
 
-    sudo apt-get install -y libcairo2-dev libjpeg8-dev libgif-dev optipng pngcrush pngquant libpango1.0-dev graphicsmagick libjpeg-turbo-progs inkscape
+    sudo apt-get install -y libcairo2-dev libjpeg8-dev libgif-dev optipng pngcrush pngquant libpango1.0-dev graphicsmagick libjpeg-progs inkscape
 
 Or on OS X, with [homebrew](http://brew.sh/):
 
     brew install cairo jpeg giflib optipng pngcrush pngquant pango graphicsmagick jpeg-turbo inkscape
+    export PKG_CONFIG_PATH=/opt/X11/lib/pkgconfig
 
 
 Then make sure you have node.js and <a href="http://npmjs.org/">npm</a> installed,
@@ -118,6 +137,34 @@ The value should be the path to `almond.js` like so:
 ```
 
 When you do this you should not use require as an external script loader, since almond does not support this.
+
+
+Working with Sass (.scss) assets
+--------------------------------
+Assetgraph will compile your sass assets to CSS, but only if you link in your `.scss`-files like this:
+
+``` html
+<link rel="stylesheet" type="text/css" href="path/to/stylesheet.scss">
+```
+
+Or using a requirejs css plugin:
+
+``` javascript
+// RequireJS AMD syntax
+define(['css!path/to/stylesheet.scss'], function () {
+  // Your code here
+})
+
+// RequireJS CommonJS compatible syntax
+define(function (require) {
+  require('css!path/to/stylesheet.scss');
+
+  // Your code here
+})
+```
+
+In order to make this work for you in development you can use [livestyle](https://github.com/One-com/livestyle/) as a static webserver.
+It will automatically convert the sass files in the HTTP stream, making your page work out of the box with no configuration.
 
 
 Referring to static files in JavaScript using GETSTATICURL

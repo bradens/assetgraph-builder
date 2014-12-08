@@ -26,10 +26,19 @@ var path = require('path'),
     localeIds = commandLineOptions.locales && _.flatten(_.flatten([commandLineOptions.locales]).map(function (localeId) {
         return localeId.split(',');
     })).map(i18nTools.normalizeLocaleId),
-    defaultLocaleId = commandLineOptions.defaultlocale && i18nTools.normalizeLocaleId(commandLineOptions.defaultlocale),
     initialAssetUrls = commandLineOptions._.map(urlTools.fsFilePathToFileUrl),
     originalTextByAssetId = {},
+    defaultLocaleId,
     i18nUrl;
+
+if (commandLineOptions.defaultlocale) {
+    defaultLocaleId = i18nTools.normalizeLocaleId(commandLineOptions.defaultlocale);
+    if (localeIds && localeIds.indexOf(defaultLocaleId) === -1) {
+        throw new Error('The default locale id (' + defaultLocaleId + ') is not among the locales listed with the --locales switch (' + localeIds.join(', ') + ')');
+    }
+} else if (localeIds) {
+    defaultLocaleId = localeIds[0];
+}
 
 function isArrayOrObject(obj) {
     return Array.isArray(obj) || (obj && typeof obj === 'object');
@@ -56,7 +65,7 @@ new AssetGraph({root: commandLineOptions.root})
     .assumeThatAllHtmlFragmentAssetsWithoutIncomingRelationsAreNotTemplates()
     .populate({
         followRelations: {
-            type: AssetGraph.query.not('HtmlAnchor'),
+            type: AssetGraph.query.not(['HtmlAnchor', 'HtmlMetaRefresh']),
             to: {url: AssetGraph.query.not(/^https?:/)}
         }
     })
@@ -68,8 +77,13 @@ new AssetGraph({root: commandLineOptions.root})
         if (i18nUrl) {
             i18nAssetForAllKeys = assetGraph.findAssets({url: i18nUrl})[0];
             if (!i18nAssetForAllKeys) {
-                console.error('--i18n ' + commandLineOptions.i18n + ': not found');
-                process.exit(1);
+                i18nAssetForAllKeys = new AssetGraph.I18n({
+                    url: i18nUrl,
+                    isDirty: true,
+                    parseTree: {}
+                });
+                assetGraph.addAsset(i18nAssetForAllKeys);
+                assetGraph.emit('info', '--i18n ' + commandLineOptions.i18n + ' not found, creating it');
             }
         }
 
@@ -226,7 +240,7 @@ new AssetGraph({root: commandLineOptions.root})
                         if (!_.isEqual(occurrence.defaultValue, allKeysInDefaultLocale[occurrence.key])) {
                             if (occurrence.type === 'TR' || occurrence.type === 'TRPAT') {
                                 var asset = occurrence.asset.nonInlineAncestor,
-                                    replaceRegExp = new RegExp('(TR(?:PAT)?\\(([\'"])' + key.replace(/[\.\[\]\*\+\?\{\}\(\)\^\$]/g, '\\$&') + '\\2\\s*,\\s*)[^)]*?\\)', 'g');
+                                    replaceRegExp = new RegExp('(TR(?:PAT)?\\(([\'"])' + key.replace(/[\.\[\]\*\+\?\{\}\(\)\^\$]/g, '\\$&') + '\\2\\s*,\\s*)(?:[^)\'"]*|"[^"]*"|\'[^\']*\')*?\\)', 'g');
 
                                 replacedTextByAssetId[asset.id] = (replacedTextByAssetId[asset.id] || originalTextByAssetId[asset.id] || asset.text)
                                     .replace(replaceRegExp,
@@ -254,7 +268,7 @@ new AssetGraph({root: commandLineOptions.root})
     })
     .prettyPrintAssets({type: 'I18n', isDirty: true})
     .writeStatsToStderr()
-    .writeAssetsToDisc({type: ['I18n'], isDirty: true})
+    .writeAssetsToDisc({type: 'I18n', isDirty: true})
     .if(commandLineOptions.replace)
         .writeAssetsToDisc({type: ['JavaScript', 'Html'], hasReplacedLanguageKeys: true})
     .endif()

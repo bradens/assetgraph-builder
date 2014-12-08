@@ -2,7 +2,7 @@
   "name": "assetgraph-builder",
   "description": "Build system for web sites and applications",
   "repository": "git://github.com/One-com/assetgraph-builder.git",
-  "version": "1.10.0",
+  "version": "2.7.0",
   "keywords": [
     "assetgraph",
     "web",
@@ -39,38 +39,43 @@
     "bin"
   ],
   "dependencies": {
-    "assetgraph": "=1.7.0",
-    "async": "=0.2.9",
-    "chalk": "=0.4.0",
-    "express-processimage": "=0.1.20",
-    "extend": "=1.2.1",
-    "jpegtran": "=0.0.6",
-    "memoizesync": "=0.2.0",
-    "ngmin": "=0.4.0",
-    "optimist": "=0.2.6",
-    "optipng": "=0.0.6",
-    "passerror": "=1.0.0",
-    "pngcrush": "=0.0.5",
-    "pngquant": "=0.1.5",
-    "seq": "=0.3.5",
-    "temp": "=0.4.0",
-    "underscore": "=1.2.0",
-    "urltools": "=0.1.0"
+    "assetgraph": "1.13.1",
+    "async": "0.2.9",
+    "chalk": "0.4.0",
+    "express-processimage": "1.3.1",
+    "extend": "1.2.1",
+    "jpegtran": "0.0.6",
+    "memoizesync": "0.2.0",
+    "ngmin": "0.4.0",
+    "optimist": "0.2.6",
+    "optipng": "0.0.6",
+    "passerror": "1.0.0",
+    "pngcrush": "0.0.5",
+    "pngquant": "0.1.5",
+    "semver": "3.0.1",
+    "seq": "0.3.5",
+    "temp": "0.4.0",
+    "underscore": "1.2.0",
+    "urltools": "0.2.0"
   },
   "optionalDependencies": {
-    "assetgraph-sprite": "=0.6.2",
-    "histogram": "=0.1.5",
-    "node-zopfli": "=1.1.4"
+    "assetgraph-sprite": "0.6.2",
+    "histogram": "0.1.5",
+    "node-zopfli": "1.1.4"
   },
   "devDependencies": {
-    "autoprefixer": "=2.1",
-    "gm": "=1.6.1",
-    "istanbul": "=0.2.10",
-    "jshint": "=2.5.1",
-    "less": "=1.6.3",
-    "mocha": "=1.20.0",
-    "unexpected": "=3.2.0",
-    "unexpected-jsdom": "=0.1.0"
+    "autoprefixer": "3.1.0",
+    "coveralls": "2.11.1",
+    "gm": "1.6.1",
+    "istanbul": "0.2.10",
+    "jshint": "2.5.1",
+    "less": "1.6.3",
+    "mocha": "1.20.0",
+    "node-sass": "0.9.4",
+    "sinon": "1.10.3",
+    "unexpected": "3.2.0",
+    "unexpected-jsdom": "0.1.0",
+    "unexpected-sinon": "3.0.2"
   },
   "engines": {
     "node": ">=0.8.0"
@@ -85,7 +90,7 @@
   "scripts": {
     "lint": "jshint . bin/*",
     "test": "npm run lint && mocha",
-    "travis": "npm run lint && mocha -R spec",
-    "coverage": "NODE_ENV=development ./node_modules/.bin/istanbul cover ./node_modules/mocha/bin/_mocha -- --reporter dot"
+    "travis": "npm run lint && npm run coverage",
+    "coverage": "NODE_ENV=development ./node_modules/.bin/istanbul cover -x lib/i18nTools.js -x lib/bootstrapper.js ./node_modules/mocha/bin/_mocha -- --reporter dot"
   }
 }
